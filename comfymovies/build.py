@@ -58,6 +58,10 @@ class MovieSpec:
     negative: str = DEFAULT_NEGATIVE
     lora_strength: float = 0.5
     cfg: float = 1.0
+    # Denoising steps. 0 = fast distilled path (fixed few-step ManualSigmas).
+    # > 0 = quality path via LTXVScheduler (typically with lora_strength=0 and
+    # a higher cfg for sharper, more prompt-faithful output).
+    steps: int = 0
     # Seamless long-form controls (context windows). Enabled automatically for
     # clips longer than ``context_length`` frames unless forced off.
     use_context_windows: bool | None = None
@@ -241,14 +245,6 @@ def build_workflow(spec: MovieSpec) -> dict:
         "length": length, "batch_size": 1,
     })
 
-    node("noise", "RandomNoise", {"noise_seed": spec.seed})
-    node("sampler", "KSamplerSelect", {"sampler_name": "euler"})
-    node("sigmas", "ManualSigmas", {"sigmas": BASE_SIGMAS})
-    node("guider", "CFGGuider", {
-        "model": model_ref, "positive": ["cond", 0],
-        "negative": ["cond", 1], "cfg": spec.cfg,
-    })
-
     # Native LTX-2 joint audio is only valid up to AUDIO_MAX_FRAMES; longer clips
     # render video-only (seamless via context windows) and are scored separately
     # (e.g. ElevenLabs). Auto-gate unless the caller forces it.
@@ -265,11 +261,35 @@ def build_workflow(spec: MovieSpec) -> dict:
         node("av", "LTXVConcatAVLatent", {
             "video_latent": ["vlatent", 0], "audio_latent": ["alatent", 0],
         })
-        node("sample", "SamplerCustomAdvanced", {
-            "noise": ["noise", 0], "guider": ["guider", 0],
-            "sampler": ["sampler", 0], "sigmas": ["sigmas", 0],
-            "latent_image": ["av", 0],
+        latent_ref: list = ["av", 0]
+    else:
+        latent_ref = ["vlatent", 0]
+
+    node("noise", "RandomNoise", {"noise_seed": spec.seed})
+    node("sampler", "KSamplerSelect", {"sampler_name": "euler"})
+
+    # Sigma schedule: the distilled few-step path (fast, softer) uses a fixed
+    # ManualSigmas; quality mode (steps > 0, typically with the LoRA disabled)
+    # derives a proper multi-step schedule from LTXVScheduler for sharper output.
+    if spec.steps and spec.steps > 0:
+        node("sigmas", "LTXVScheduler", {
+            "steps": spec.steps, "max_shift": 2.05, "base_shift": 0.95,
+            "stretch": True, "terminal": 0.1, "latent": latent_ref,
         })
+    else:
+        node("sigmas", "ManualSigmas", {"sigmas": BASE_SIGMAS})
+
+    node("guider", "CFGGuider", {
+        "model": model_ref, "positive": ["cond", 0],
+        "negative": ["cond", 1], "cfg": spec.cfg,
+    })
+    node("sample", "SamplerCustomAdvanced", {
+        "noise": ["noise", 0], "guider": ["guider", 0],
+        "sampler": ["sampler", 0], "sigmas": ["sigmas", 0],
+        "latent_image": latent_ref,
+    })
+
+    if with_audio:
         node("split", "LTXVSeparateAVLatent", {"av_latent": ["sample", 0]})
         node("vdec", "VAEDecode", {"samples": ["split", 0], "vae": ["ckpt", 2]})
         node("adec", "LTXVAudioVAEDecode", {
@@ -279,11 +299,6 @@ def build_workflow(spec: MovieSpec) -> dict:
             "images": ["vdec", 0], "audio": ["adec", 0], "fps": float(spec.fps),
         })
     else:
-        node("sample", "SamplerCustomAdvanced", {
-            "noise": ["noise", 0], "guider": ["guider", 0],
-            "sampler": ["sampler", 0], "sigmas": ["sigmas", 0],
-            "latent_image": ["vlatent", 0],
-        })
         node("vdec", "VAEDecode", {"samples": ["sample", 0], "vae": ["ckpt", 2]})
         node("video", "CreateVideo", {
             "images": ["vdec", 0], "fps": float(spec.fps),

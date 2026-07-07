@@ -43,6 +43,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--scenes", type=int, default=0,
                    help="Number of scheduled scene beats (0 = auto by duration)")
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--quality", action="store_true",
+                   help="Full model, multi-step schedule, higher CFG (sharper, slower)")
+    p.add_argument("--steps", type=int, default=0,
+                   help="Denoising steps (0 = fast distilled path; >0 = quality)")
+    p.add_argument("--cfg", type=float, default=0.0,
+                   help="Guidance scale (default 1.0 fast / 3.5 quality)")
+    p.add_argument("--lora-strength", type=float, default=-1.0,
+                   help="Distilled LoRA strength (default 0.5 fast / 0 quality)")
     p.add_argument("--no-enhance", action="store_true",
                    help="Skip on-box gemma prompt enhancement")
     p.add_argument("--no-schedule", action="store_true",
@@ -87,6 +95,18 @@ def build_spec(args: argparse.Namespace, cfg: Config) -> MovieSpec:
         enhance=not args.no_enhance,
         schedule_scenes=None if not args.no_schedule else False,
     )
+
+    # Quality vs fast-distilled presets, with per-flag overrides.
+    if args.quality or args.steps > 0:
+        spec.steps = args.steps or 24
+        spec.cfg = args.cfg if args.cfg > 0 else 3.5
+        spec.lora_strength = args.lora_strength if args.lora_strength >= 0 else 0.0
+    else:
+        if args.cfg > 0:
+            spec.cfg = args.cfg
+        if args.lora_strength >= 0:
+            spec.lora_strength = args.lora_strength
+
     if args.negative:
         spec.negative = args.negative
     return spec
