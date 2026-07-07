@@ -15,7 +15,10 @@ import os
 import sys
 import time
 
-from .build import MovieSpec, Scene, build_workflow, frames_for
+from .build import (
+    CHAIN_SEGMENT_SECONDS, MovieSpec, Scene, build_chained_workflow,
+    build_workflow, frames_for, plan_segments,
+)
 from .comfy import ComfyClient, ComfyError
 from .config import Config
 from .prompts import expand_concept
@@ -60,6 +63,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
                    help="Skip on-box gemma prompt enhancement")
     p.add_argument("--no-schedule", action="store_true",
                    help="One continuous prompt instead of temporal scene scheduling")
+    p.add_argument("--chain", action="store_true",
+                   help="Force segment chaining (crisp seamless long-form)")
+    p.add_argument("--no-chain", action="store_true",
+                   help="Force a single-pass render (context windows for long clips)")
+    p.add_argument("--segment-seconds", type=float, default=8.0,
+                   help="Per-segment length when chaining (default 8)")
     p.add_argument("--negative", default="")
     p.add_argument("--out", default="", help="Output .mp4 path")
     p.add_argument("--music-eleven", metavar="PROMPT", default="",
@@ -131,12 +140,26 @@ def main(argv: list[str] | None = None) -> int:
     cfg = Config.from_env()
 
     spec = build_spec(args, cfg)
-    graph = build_workflow(spec)
     frames = frames_for(spec.seconds, spec.fps)
+
+    # Context windows degrade past ~10-15s (mushy, then black at ~60s), so for
+    # longer clips we chain crisp short segments via image-to-video continuity.
+    # Auto-on above ~1.5 segments unless the user forces a mode.
+    chain = args.chain or (
+        not args.no_chain and spec.seconds > CHAIN_SEGMENT_SECONDS * 1.5
+    )
+
+    if chain:
+        graph = build_chained_workflow(spec, segment_seconds=args.segment_seconds)
+        n_seg = len(plan_segments(spec, args.segment_seconds))
+        mode = f"chained x{n_seg} ({args.segment_seconds:.0f}s segs, video-only)"
+    else:
+        graph = build_workflow(spec)
+        mode = "single-pass"
 
     print(f"» {len(spec.scenes)} scene(s), {spec.width}x{spec.height}, "
           f"{spec.fps}fps, ~{spec.seconds:.0f}s ({frames} frames), "
-          f"enhance={spec.enhance}, nodes={len(graph)}")
+          f"enhance={spec.enhance}, {mode}, nodes={len(graph)}")
     for i, s in enumerate(spec.scenes, 1):
         print(f"    scene {i}: {s.prompt[:90]}")
 

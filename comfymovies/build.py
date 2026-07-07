@@ -328,3 +328,160 @@ def build_workflow(spec: MovieSpec) -> dict:
 def _ensure_8n1(value: int) -> int:
     n = max(1, round((value - 1) / 8))
     return n * 8 + 1
+
+
+# Context windows degrade quality on long clips (mushy mid-clip, black past
+# ~40s). For crisp long-form we instead chain short native segments, each linked
+# to the previous via image-to-video continuity. This is the per-segment length
+# (seconds) — kept short enough that each segment renders at full fidelity with
+# no context windows.
+CHAIN_SEGMENT_SECONDS = 8.0
+
+
+def plan_segments(spec: "MovieSpec", segment_seconds: float) -> list["Scene"]:
+    """Map the movie's scenes onto a list of per-segment scenes.
+
+    The number of segments is derived from the target duration; each segment is
+    assigned the scene whose timeline slice it falls in, so scene beats progress
+    across the chained segments.
+    """
+    n = max(1, round(spec.seconds / segment_seconds))
+    scenes = [s for s in spec.scenes if s.prompt.strip()] or [Scene("a cinematic scene")]
+    spans = _scene_spans(scenes)
+    out: list[Scene] = []
+    for i in range(n):
+        mid = (i + 0.5) / n  # midpoint of this segment on the 0..1 timeline
+        chosen = scenes[-1]
+        for scene, (start, end) in zip(scenes, spans):
+            if start <= mid < end:
+                chosen = scene
+                break
+        out.append(chosen)
+    return out
+
+
+def build_chained_workflow(
+    spec: "MovieSpec", segment_seconds: float = CHAIN_SEGMENT_SECONDS,
+) -> dict:
+    """Build a single graph that renders several crisp segments back-to-back.
+
+    Segment 1 is a normal text-to-video render. Each subsequent segment starts
+    from the *last frame* of the previous one (via ``LTXVImgToVideo``), so the
+    segments join seamlessly. All decoded frames are concatenated (dropping each
+    segment's duplicated first frame) into one continuous video.
+
+    This avoids ``LTXVContextWindows`` entirely, so every segment renders at the
+    same fidelity as a short clip — no mid-clip mush, no black long clips. Output
+    is video-only (score long clips with ElevenLabs).
+    """
+    spec = spec.normalized()
+    seg_len = frames_for(segment_seconds, spec.fps)
+    seg_scenes = plan_segments(spec, segment_seconds)
+    negative = (spec.negative + " " + spec.extra_negative).strip()
+    steps = spec.steps if spec.steps and spec.steps > 0 else 0
+
+    g: dict[str, dict] = {}
+
+    def node(nid: str, class_type: str, inputs: dict) -> str:
+        g[nid] = {"class_type": class_type, "inputs": inputs}
+        return nid
+
+    node("ckpt", "CheckpointLoaderSimple", {"ckpt_name": CKPT})
+    model_ref: list = ["ckpt", 0]
+    if spec.lora_strength and spec.lora_strength > 0:
+        node("lora", "LoraLoaderModelOnly", {
+            "model": ["ckpt", 0], "lora_name": DISTILLED_LORA,
+            "strength_model": spec.lora_strength,
+        })
+        model_ref = ["lora", 0]
+
+    node("clip", "LTXAVTextEncoderLoader", {
+        "text_encoder": TEXT_ENCODER, "ckpt_name": CKPT, "device": "default",
+    })
+    node("neg", "CLIPTextEncode", {"text": negative, "clip": ["clip", 0]})
+    node("sampler", "KSamplerSelect", {"sampler_name": "euler"})
+
+    prev_images: list | None = None       # decoded IMAGE batch of previous seg
+    prev_last_frame: list | None = None    # single last IMAGE of previous seg
+    concat_ref: list | None = None         # running concatenated IMAGE batch
+
+    for i, scene in enumerate(seg_scenes):
+        k = str(i)
+        pos_ref = _encode_scene(node, k, scene.prompt.strip(), spec)
+        node(f"cond{k}", "LTXVConditioning", {
+            "positive": pos_ref, "negative": ["neg", 0],
+            "frame_rate": float(spec.fps),
+        })
+
+        if i == 0:
+            # First segment: empty latent, plain conditioning.
+            node(f"vlat{k}", "EmptyLTXVLatentVideo", {
+                "width": spec.width, "height": spec.height,
+                "length": seg_len, "batch_size": 1,
+            })
+            pos_c: list = [f"cond{k}", 0]
+            neg_c: list = [f"cond{k}", 1]
+            latent_ref: list = [f"vlat{k}", 0]
+        else:
+            # Continuation: condition on the previous segment's last frame so the
+            # new segment opens exactly where the last one ended.
+            node(f"i2v{k}", "LTXVImgToVideo", {
+                "positive": [f"cond{k}", 0], "negative": [f"cond{k}", 1],
+                "vae": ["ckpt", 2], "image": prev_last_frame,
+                "width": spec.width, "height": spec.height,
+                "length": seg_len, "batch_size": 1, "strength": 1.0,
+            })
+            pos_c = [f"i2v{k}", 0]
+            neg_c = [f"i2v{k}", 1]
+            latent_ref = [f"i2v{k}", 2]
+
+        node(f"noise{k}", "RandomNoise", {"noise_seed": spec.seed + i})
+        if steps:
+            node(f"sig{k}", "LTXVScheduler", {
+                "steps": steps, "max_shift": 2.05, "base_shift": 0.95,
+                "stretch": True, "terminal": 0.1, "latent": latent_ref,
+            })
+            sig_ref: list = [f"sig{k}", 0]
+        else:
+            node(f"sig{k}", "ManualSigmas", {"sigmas": BASE_SIGMAS})
+            sig_ref = [f"sig{k}", 0]
+        node(f"guider{k}", "CFGGuider", {
+            "model": model_ref, "positive": pos_c, "negative": neg_c,
+            "cfg": spec.cfg,
+        })
+        node(f"samp{k}", "SamplerCustomAdvanced", {
+            "noise": [f"noise{k}", 0], "guider": [f"guider{k}", 0],
+            "sampler": ["sampler", 0], "sigmas": sig_ref,
+            "latent_image": latent_ref,
+        })
+        node(f"dec{k}", "VAEDecode", {
+            "samples": [f"samp{k}", 0], "vae": ["ckpt", 2],
+        })
+        images_ref: list = [f"dec{k}", 0]
+
+        # Last frame of this segment feeds the next segment.
+        node(f"last{k}", "ImageFromBatch", {
+            "image": images_ref, "batch_index": seg_len - 1, "length": 1,
+        })
+        prev_last_frame = [f"last{k}", 0]
+
+        if i == 0:
+            concat_ref = images_ref
+        else:
+            # Drop the duplicated first frame (== previous segment's last frame),
+            # then append to the running concatenation.
+            node(f"trim{k}", "ImageFromBatch", {
+                "image": images_ref, "batch_index": 1, "length": seg_len - 1,
+            })
+            node(f"cat{k}", "ImageBatch", {
+                "image1": concat_ref, "image2": [f"trim{k}", 0],
+            })
+            concat_ref = [f"cat{k}", 0]
+        prev_images = images_ref
+
+    node("video", "CreateVideo", {"images": concat_ref, "fps": float(spec.fps)})
+    node("save", "SaveVideo", {
+        "video": ["video", 0], "filename_prefix": spec.filename_prefix,
+        "format": "auto", "codec": "auto",
+    })
+    return g

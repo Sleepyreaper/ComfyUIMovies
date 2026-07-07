@@ -100,5 +100,36 @@ def test_save_node_terminates_graph():
     assert save[0]["inputs"]["video"][0] == "video"
 
 
+def test_chained_workflow_structure():
+    from comfymovies.build import build_chained_workflow, plan_segments
+    spec = MovieSpec(scenes=[Scene("a"), Scene("b")], seconds=24, fps=24,
+                     steps=24, cfg=3.5, lora_strength=0.0)
+    segs = plan_segments(spec, 8.0)
+    g = build_chained_workflow(spec, segment_seconds=8.0)
+    assert len(segs) == 3
+    # First segment starts from an empty latent; later ones use I2V continuity.
+    assert "vlat0" in g and "i2v1" in g and "i2v2" in g
+    assert g["i2v1"]["inputs"]["image"][0] == "last0"   # seeded by prev last frame
+    # No context windows in the chained path.
+    assert not any(n["class_type"] == "LTXVContextWindows" for n in g.values())
+    # Exactly one SaveVideo, fed by CreateVideo.
+    saves = [n for n in g.values() if n["class_type"] == "SaveVideo"]
+    assert len(saves) == 1
+    # No dangling references.
+    ids = set(g)
+    for node in g.values():
+        for v in node["inputs"].values():
+            if isinstance(v, list) and len(v) == 2 and isinstance(v[0], str):
+                assert v[0] in ids, f"dangling {v}"
+
+
+def test_chained_single_segment_is_pure_t2v():
+    from comfymovies.build import build_chained_workflow
+    g = build_chained_workflow(
+        MovieSpec(scenes=[Scene("a")], seconds=6, fps=24), segment_seconds=8.0)
+    assert "vlat0" in g
+    assert not any(k.startswith("i2v") for k in g)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
