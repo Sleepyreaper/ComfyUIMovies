@@ -1,0 +1,10 @@
+{
+  "_comment": "Original ThunderCats-style knock-off (no trademarked names/characters), reimagined with warrior dogs per user request. The heroic 'Rumble Dogs' pack vs the evil sorcerer 'Grimjaw' on an alien world. Render: python -m comfymovies --scene-file prompts/rumble_dogs.json --duration 60 --res 480p --quality --seed 7777",
+  "title": "RUMBLE DOGS",
+  "scenes": [
+    { "prompt": "1980s cartoon, cel animation, bold outlines, vivid fantasy colors: on an alien world with twin moons, a pack of muscular anthropomorphic warrior dogs — the heroic RUMBLE DOGS in gleaming armor and capes — stand guard atop their canyon fortress, their leader a noble golden-furred hound raising a glowing crystal sword, epic wide shot", "weight": 1.0 },
+    { "prompt": "1980s cartoon, cel animation, bold outlines: the evil sorcerer GRIMJAW, a hulking shadowy jackal-demon with green flaming eyes, unleashes his skeletal minions and bat-winged beasts to storm the fortress gates, purple lightning, ominous glowing runes", "weight": 1.1 },
+    { "prompt": "1980s cartoon, cel animation, dynamic action: the golden RUMBLE DOGS leader leaps into battle, his crystal sword blazing with light, clashing against GRIMJAW's dark staff in a shower of magical sparks, the pack fighting minions around them, explosive energy, heroic low angle", "weight": 1.2 },
+    { "prompt": "1980s cartoon, cel animation, triumphant: dawn breaks with golden light as GRIMJAW dissolves into shadow, defeated, and the victorious RUMBLE DOGS pack howls in triumph atop the fortress, the leader thrusting his glowing crystal sword to the sky, proud freeze-frame", "weight": 1.0 }
+  ]
+}

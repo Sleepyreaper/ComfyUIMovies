@@ -38,20 +38,24 @@ concept ──► scene split ──► [per scene] gemma enhance ──► CLIP
                                               (optional) ElevenLabs music ┘  merged via ffmpeg
 ```
 
-**Seamless, no hard cuts.** Instead of stitching separate clips, the movie is a
-single continuous latent:
+**Seamless, no hard cuts.** Three strategies, picked automatically by length:
 
-- **Long clips (> context length):** *continuous mode* — one gemma‑enhanced
-  prompt whose narrative arc (establish → rise → clash → climax → resolve)
-  evolves across `LTXVContextWindows` with FreeNoise blending.
-- **Short clips:** optional *scene scheduling* pins each beat to its slice of the
-  timeline with `ConditioningSetAreaPercentageVideo` so beats flow into each
-  other in one take.
+- **Long clips (default > ~12 s):** *segment chaining* — render several crisp
+  ~8 s native segments and link each to the previous one's **last frame** via
+  image‑to‑video (`LTXVImgToVideo`), then concatenate. Every segment stays as
+  sharp as a short clip, and the joins are seamless. (Context windows were tried
+  first but degrade past ~10 s and go black by ~60 s, so chaining is the
+  long‑form default.)
+- **Short clips:** a single native pass, optionally with *scene scheduling* that
+  pins each beat to its slice of the timeline via
+  `ConditioningSetAreaPercentageVideo`.
+
+Control it with `--chain` / `--no-chain` / `--segment-seconds`.
 
 **Audio.** LTX‑2's joint audio path generates a synced soundtrack for clips up to
-~40 s (the audio latent caps at 1000 frames). Longer movies render video‑only and
-are meant to be scored — e.g. with the ElevenLabs option below, which is why the
-default long‑form soundtrack comes from ElevenLabs.
+~40 s (the audio latent caps at 1000 frames). Longer movies (and all chained
+clips) render video‑only and are meant to be scored — e.g. with the ElevenLabs
+option below.
 
 ---
 
@@ -93,6 +97,8 @@ python -m comfymovies "<concept>" [options]
   --lora-strength FLOAT  distilled LoRA strength (default 0.5 fast / 0 quality)
   --no-enhance           skip on-box gemma prompt enhancement
   --no-schedule          one continuous prompt (no temporal scene scheduling)
+  --chain / --no-chain   force/disable segment chaining (auto-on for long clips)
+  --segment-seconds N    per-segment length when chaining (default 8)
   --negative "..."       override the default negative prompt
   --out PATH             output .mp4 path
   --music-eleven "PROMPT"    also render an ElevenLabs-scored copy (_eleven.mp4)
@@ -104,10 +110,17 @@ python -m comfymovies "<concept>" [options]
 ### Examples
 
 ```bash
-# 60s seamless GI Joe short (video-only + score with ElevenLabs)
+# 60s seamless GI Joe short (auto-chained, quality) + ElevenLabs score
 python -m comfymovies "GI Joe style 1980s cartoon, American soldiers fight \
   the evil Serpent Empire, cel animation 80s style" \
-  --duration 60 --music-eleven "heroic 1980s cartoon theme, brass, driving drums"
+  --duration 60 --res 480p --quality --seed 1980 \
+  --music-eleven "heroic 1980s cartoon theme, brass, driving drums"
+
+# Included original 80s knock-offs (scene files under prompts/):
+python -m comfymovies --scene-file prompts/disguised_robots.json \
+  --duration 60 --res 480p --quality --seed 4242      # Transformers-style
+python -m comfymovies --scene-file prompts/rumble_dogs.json \
+  --duration 60 --res 480p --quality --seed 7777      # ThunderCats-style
 
 # 20s clip with native LTX audio, 5 scheduled beats
 python -m comfymovies "a neon cyberpunk street chase in the rain" \
