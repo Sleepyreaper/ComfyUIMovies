@@ -24,6 +24,9 @@ DEFAULT_NEGATIVE = (
 # LTXVEmptyLatentAudio caps frames_number at 1000, so native joint audio is only
 # available for clips at/under this many frames (~40s at 24fps).
 AUDIO_MAX_FRAMES = 1000
+# Above this frame count, decode the latent in tiles (VAEDecodeTiled). A plain
+# VAEDecode of very long latents returns black frames.
+TILED_DECODE_FRAMES = 600
 
 
 def snap(value: int, multiple: int) -> int:
@@ -289,9 +292,20 @@ def build_workflow(spec: MovieSpec) -> dict:
         "latent_image": latent_ref,
     })
 
+    # Decode. Long clips must decode the latent in spatial+temporal tiles;
+    # a plain VAEDecode of ~1400+ frames at once returns black frames.
+    def _video_decode(nid: str, samples_ref: list) -> str:
+        if length > TILED_DECODE_FRAMES:
+            return node(nid, "VAEDecodeTiled", {
+                "samples": samples_ref, "vae": ["ckpt", 2],
+                "tile_size": 512, "overlap": 64,
+                "temporal_size": 32, "temporal_overlap": 8,
+            })
+        return node(nid, "VAEDecode", {"samples": samples_ref, "vae": ["ckpt", 2]})
+
     if with_audio:
         node("split", "LTXVSeparateAVLatent", {"av_latent": ["sample", 0]})
-        node("vdec", "VAEDecode", {"samples": ["split", 0], "vae": ["ckpt", 2]})
+        _video_decode("vdec", ["split", 0])
         node("adec", "LTXVAudioVAEDecode", {
             "samples": ["split", 1], "audio_vae": ["avae", 0],
         })
@@ -299,7 +313,7 @@ def build_workflow(spec: MovieSpec) -> dict:
             "images": ["vdec", 0], "audio": ["adec", 0], "fps": float(spec.fps),
         })
     else:
-        node("vdec", "VAEDecode", {"samples": ["sample", 0], "vae": ["ckpt", 2]})
+        _video_decode("vdec", ["sample", 0])
         node("video", "CreateVideo", {
             "images": ["vdec", 0], "fps": float(spec.fps),
         })
