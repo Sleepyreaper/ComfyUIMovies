@@ -16,6 +16,10 @@ progression, video, and (for short clips) synchronized audio are all produced
 on the 5090 via ComfyUI's built‑in gemma LLM node — no external prompt service
 required.
 
+> **New here?** See **[docs/SETUP.md](docs/SETUP.md)** for the full architecture
+> and a step‑by‑step install (NVIDIA **and** AMD), and
+> **[prompts/README.md](prompts/README.md)** for how to write your own prompts.
+
 ---
 
 ## How it works
@@ -81,7 +85,12 @@ python -m comfymovies "<concept>" [options]
   --fps N                frames per second (default 24)
   --res 480p|512|576p|720p|WxH
   --scenes N             number of narrative beats (0 = auto by duration)
+  --scene-file PATH      explicit scene beats from a JSON/txt/md file
   --seed N
+  --quality              full model + multi-step schedule + higher CFG (sharper)
+  --steps N              denoising steps (0 = fast distilled; >0 = quality)
+  --cfg FLOAT            guidance scale (default 1.0 fast / 3.5 quality)
+  --lora-strength FLOAT  distilled LoRA strength (default 0.5 fast / 0 quality)
   --no-enhance           skip on-box gemma prompt enhancement
   --no-schedule          one continuous prompt (no temporal scene scheduling)
   --negative "..."       override the default negative prompt

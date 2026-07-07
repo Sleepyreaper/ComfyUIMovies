@@ -131,3 +131,36 @@ def expand_concept(
         except Exception:
             pass
     return expand_template(concept, n_scenes)
+
+
+def load_scene_file(path: str) -> list[Scene]:
+    """Load explicit scene beats from a JSON, text, or markdown file.
+
+    Accepted formats:
+
+    * **JSON** — ``["scene one", "scene two"]``, or a list of objects
+      ``[{"prompt": "...", "weight": 1.5}, ...]``, or ``{"scenes": [...]}``.
+    * **Text / Markdown** — one scene per non-empty line; lines beginning with
+      ``#`` are treated as comments and ignored.
+
+    Each scene becomes one temporal beat of the movie (weights control how much
+    of the timeline each beat occupies when scene scheduling is active).
+    """
+    with open(path, encoding="utf-8") as f:
+        raw = f.read()
+
+    if path.lower().endswith(".json"):
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            data = data.get("scenes", [])
+        scenes: list[Scene] = []
+        for item in data:
+            if isinstance(item, str):
+                scenes.append(Scene(item.strip()))
+            elif isinstance(item, dict) and item.get("prompt"):
+                scenes.append(Scene(str(item["prompt"]).strip(),
+                                    float(item.get("weight", 1.0))))
+        return [s for s in scenes if s.prompt]
+
+    lines = [ln.strip() for ln in raw.splitlines()]
+    return [Scene(ln) for ln in lines if ln and not ln.startswith("#")]

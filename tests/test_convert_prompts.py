@@ -52,3 +52,23 @@ def test_expand_template_scene_count_and_style():
 def test_expand_template_single_scene():
     scenes = expand_template("a lone astronaut on mars, photorealistic", 1)
     assert len(scenes) == 1
+
+
+def test_load_scene_file_text(tmp_path):
+    from comfymovies.prompts import load_scene_file
+    p = tmp_path / "m.txt"
+    p.write_text("# comment\nscene one\n\nscene two\n")
+    scenes = load_scene_file(str(p))
+    assert [s.prompt for s in scenes] == ["scene one", "scene two"]
+
+
+def test_load_scene_file_json_with_weights(tmp_path):
+    import json as _json
+    from comfymovies.prompts import load_scene_file
+    p = tmp_path / "m.json"
+    p.write_text(_json.dumps({"scenes": [
+        {"prompt": "a", "weight": 2.0}, "b",
+    ]}))
+    scenes = load_scene_file(str(p))
+    assert [s.prompt for s in scenes] == ["a", "b"]
+    assert scenes[0].weight == 2.0

@@ -1,0 +1,9 @@
+{
+  "_comment": "Explicit scene beats for one seamless movie. Run with: python -m comfymovies --scene-file prompts/example_scenes.json --duration 30 --res 480p --quality. 'weight' controls each beat's share of the timeline (optional, default 1.0).",
+  "scenes": [
+    { "prompt": "GI Joe style 1980s cartoon, wide establishing shot of an American squad crouched at the jungle edge at dawn, cel animation, bold outlines", "weight": 1.0 },
+    { "prompt": "GI Joe style 1980s cartoon, the soldiers advance under fire toward a Serpent Empire bunker, tracer rounds and smoke, dynamic action", "weight": 1.2 },
+    { "prompt": "GI Joe style 1980s cartoon, a towering serpent-emblem war mech rises and opens fire, heroes dive for cover, explosions", "weight": 1.2 },
+    { "prompt": "GI Joe style 1980s cartoon, triumphant victory shot, soldiers raising the flag as the mech falls, golden sunrise, proud freeze-frame", "weight": 1.0 }
+  ]
+}

@@ -118,3 +118,27 @@ class ComfyClient:
             urllib.request.urlopen(req, timeout=10)
         except Exception:
             pass
+
+    def cancel(self, prompt_id: str) -> None:
+        """Cancel a specific queued/running prompt without touching others.
+
+        Removes it from the pending queue by id; only issues a global
+        ``/interrupt`` if that exact prompt is the one currently running (so a
+        dry-run never kills an unrelated render already in progress).
+        """
+        payload = json.dumps({"delete": [prompt_id]}).encode()
+        req = urllib.request.Request(
+            self.base + "/queue", data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            urllib.request.urlopen(req, timeout=10)
+        except Exception:
+            pass
+        try:
+            q = json.loads(self._get("/queue", timeout=10))
+            running = [item[1] for item in q.get("queue_running", [])]
+            if running == [prompt_id]:
+                self.interrupt()
+        except Exception:
+            pass

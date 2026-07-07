@@ -34,7 +34,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         prog="comfymovies",
         description="Generate a seamless LTX-2 movie from a text concept.",
     )
-    p.add_argument("concept", help="One-line description of the movie")
+    p.add_argument("concept", nargs="?", default="",
+                   help="One-line description of the movie "
+                        "(optional if --scene-file is given)")
+    p.add_argument("--scene-file", default="",
+                   help="Path to a JSON/txt/md file of explicit scene beats "
+                        "(one per line, or a JSON list) — bypasses auto-expansion")
     p.add_argument("--duration", type=float, default=60.0,
                    help="Target length in seconds (default 60)")
     p.add_argument("--fps", type=int, default=24)
@@ -84,11 +89,19 @@ def auto_scene_count(duration: float) -> int:
 
 def build_spec(args: argparse.Namespace, cfg: Config) -> MovieSpec:
     width, height = resolve_res(args.res)
-    n_scenes = args.scenes or auto_scene_count(args.duration)
-    scenes = (
-        [Scene(args.concept)] if n_scenes <= 1
-        else expand_concept(args.concept, n_scenes, cfg)
-    )
+    if args.scene_file:
+        from .prompts import load_scene_file
+        scenes = load_scene_file(args.scene_file)
+        if not scenes:
+            raise SystemExit(f"No scenes found in {args.scene_file}")
+    else:
+        if not args.concept:
+            raise SystemExit("Provide a concept string or --scene-file.")
+        n_scenes = args.scenes or auto_scene_count(args.duration)
+        scenes = (
+            [Scene(args.concept)] if n_scenes <= 1
+            else expand_concept(args.concept, n_scenes, cfg)
+        )
     spec = MovieSpec(
         scenes=scenes, width=width, height=height, fps=args.fps,
         seconds=args.duration, seed=args.seed,
@@ -136,8 +149,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"✓ validated & queued: prompt_id={prompt_id}")
 
     if args.dry_run:
-        client.interrupt()
-        print("dry-run: interrupted after validation.")
+        client.cancel(prompt_id)
+        print("dry-run: validated, removed from queue.")
         return 0
 
     os.makedirs(cfg.output_dir, exist_ok=True)
