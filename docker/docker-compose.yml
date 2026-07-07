@@ -1,0 +1,19 @@
+services:
+  comfymovies:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: comfymovies:latest
+    environment:
+      # The ComfyUI box (PC with the RTX 5090). Override as needed.
+      COMFY_HOST: "192.168.1.90"
+      COMFY_PORT: "8188"
+      COMFYMOVIES_OUTPUT: "/app/output"
+      # Optional ElevenLabs scoring (leave empty to use native LTX audio only).
+      ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY:-}"
+    volumes:
+      - ./output:/app/output
+    # Example one-shot run:
+    #   docker compose -f docker/docker-compose.yml run --rm comfymovies \
+    #     "GI Joe style 1980s cartoon, soldiers vs the Serpent Empire" --duration 60
+    command: ["--help"]

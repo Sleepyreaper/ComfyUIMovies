@@ -1,0 +1,19 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Rendered movies & run logs (regenerated, not source)
+output/
+logs/
+*.mp4
+*.mp3
+*.wav
+
+# Local env
+.env
