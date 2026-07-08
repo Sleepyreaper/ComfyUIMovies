@@ -1,0 +1,32 @@
+{
+  "_comment": "Cinematic-anime short: a girl befriends a forest spirit. 8 shots, single-subject each, consistent character. Render keyframes first (film.build_keyframe_workflow) to check consistency, then shots (film.build_shot_workflow).",
+  "title": "THE FOREST FRIEND",
+  "character": "A young girl about ten years old with a short black bob and a small red hair ribbon, big curious dark eyes, wearing a pale blue dress with white collar and red rain boots",
+  "style": "Studio Ghibli style cinematic anime film still, lush hand-painted forest, soft golden god-rays through the canopy, delicate detailed linework, painterly depth, warm magical nostalgic atmosphere, masterpiece anime film frame, 1980s-1990s cel anime aesthetic",
+  "shots": [
+    { "seed": 101, "seconds": 6,
+      "keyframe": "wide establishing shot, the girl steps into a vast ancient mossy forest, shafts of golden light beam through towering trees, drifting motes of light and mist, she looks up in wonder",
+      "motion": "the girl walks slowly forward into the forest, light motes drift through the air, mist curls gently, leaves sway, the camera slowly pushes in, serene magical Studio Ghibli motion" },
+    { "seed": 102, "seconds": 6,
+      "keyframe": "medium shot, the girl kneels among glowing ferns and mushrooms, leaning in curiously toward a soft blue glow hidden in the moss, dappled light on her face",
+      "motion": "the girl leans in slowly, the ferns and glowing plants sway gently, soft light pulses, dust motes float, subtle calm motion" },
+    { "seed": 103, "seconds": 6,
+      "keyframe": "close-up, a small round fluffy white forest spirit the size of a cat with big gentle black eyes and tiny leaf-like ears peeks out from the moss, softly glowing, surrounded by tiny lights",
+      "motion": "the little forest spirit blinks and tilts its head, its glow pulses softly, tiny lights drift around it, its ears twitch, gentle magical motion" },
+    { "seed": 104, "seconds": 6,
+      "keyframe": "two-shot, the girl slowly reaches out an open hand toward the small glowing white forest spirit, both lit by warm forest light, tender moment",
+      "motion": "the girl's hand reaches out slowly and the little spirit floats up to sniff it, both moving gently, lights drifting, delicate tentative motion" },
+    { "seed": 105, "seconds": 6,
+      "keyframe": "close-up of the girl's face lighting up with joy and wonder as she smiles, warm dappled golden light, tiny glowing lights reflected in her wide eyes",
+      "motion": "the girl's face breaks into a delighted smile, her hair stirs in a soft breeze, glowing lights drift past, her eyes shine, gentle emotional motion" },
+    { "seed": 106, "seconds": 6,
+      "keyframe": "wide shot, the little white forest spirit floats ahead leading the girl deeper through a glowing enchanted forest path, she follows with arms out, magical",
+      "motion": "the spirit floats forward and the girl runs after it happily, the glowing forest drifts past, lights swirl, flowing joyful motion, camera tracking with them" },
+    { "seed": 107, "seconds": 6,
+      "keyframe": "wide magical shot, the girl and the little spirit stand in a clearing as dozens of glowing forest spirits and fireflies rise into the air all around them, breathtaking",
+      "motion": "countless glowing spirits and fireflies rise and swirl slowly into the air around the still girl, soft lights everywhere, awe-struck gentle motion, slow camera rise" },
+    { "seed": 108, "seconds": 6,
+      "keyframe": "peaceful wide shot at golden hour, the girl sits at the forest edge with the small glowing spirit nestled beside her, both looking out over a glowing valley, warm sunset light",
+      "motion": "the girl and the little spirit sit together breathing softly, grass and hair sway in a gentle breeze, warm light shifts, distant lights twinkle, calm resolving motion, slow push-in" }
+  ]
+}
