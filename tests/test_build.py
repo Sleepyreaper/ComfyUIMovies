@@ -133,3 +133,14 @@ def test_chained_single_segment_is_pure_t2v():
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+def test_post_filter_string():
+    from comfymovies.post import PolishSpec, build_filter
+    f = build_filter(PolishSpec(fps=24, height=720, sharpen=0.6))
+    assert "minterpolate=fps=24" in f
+    assert "scale=-2:720" in f
+    assert "unsharp" in f
+    # Non-interpolated path uses a plain fps filter.
+    f2 = build_filter(PolishSpec(fps=30, interpolate=False, sharpen=0))
+    assert "fps=30" in f2 and "minterpolate" not in f2 and "unsharp" not in f2
