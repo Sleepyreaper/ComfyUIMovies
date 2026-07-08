@@ -28,6 +28,20 @@ FLUX_STEPS = 8
 FLUX_GUIDANCE = 4.0
 FLUX_NEG = "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, ugly, jpeg artifacts"
 
+# WAN 2.2 is trained mostly on real footage and will drift an anime keyframe
+# toward photorealism as it animates. We fight that by (a) anchoring the anime
+# style in WAN's OWN prompt and (b) pushing realism terms into its negative.
+ANIME_MOTION_ANCHOR = (
+    "2D hand-drawn Studio Ghibli cel anime, flat anime shading, painterly anime "
+    "background, bold clean linework, consistent traditional anime art style, "
+    "NOT photorealistic, NOT 3d"
+)
+ANIME_NEGATIVE = (
+    WAN_NEGATIVE + ", photorealistic, realistic, photograph, real person, "
+    "live action, 3d, 3d render, cgi, realistic skin texture, uncanny, "
+    "film still of real people, plastic render"
+)
+
 
 @dataclass
 class Shot:
@@ -63,7 +77,9 @@ class FilmSpec:
         return ". ".join(parts)
 
     def motion_prompt(self, shot: Shot) -> str:
-        return shot.motion
+        # Keep the anime style anchored during animation so WAN doesn't drift to
+        # photorealism; the style line follows the motion description.
+        return f"{shot.motion}. {ANIME_MOTION_ANCHOR}"
 
 
 def _flux_keyframe(node, key: str, prompt: str, seed: int, W: int, H: int) -> list:
@@ -128,7 +144,7 @@ def build_shot_workflow(spec: FilmSpec, index: int) -> dict:
     node("mshi", "ModelSamplingSD3", {"model": ["whi", 0], "shift": WAN_SHIFT})
     node("mslo", "ModelSamplingSD3", {"model": ["wlo", 0], "shift": WAN_SHIFT})
     node("wpos", "CLIPTextEncode", {"text": spec.motion_prompt(shot), "clip": ["wclip", 0]})
-    node("wneg", "CLIPTextEncode", {"text": WAN_NEGATIVE, "clip": ["wclip", 0]})
+    node("wneg", "CLIPTextEncode", {"text": ANIME_NEGATIVE, "clip": ["wclip", 0]})
     node("i2v", "WanImageToVideo", {
         "positive": ["wpos", 0], "negative": ["wneg", 0], "vae": ["wvae", 0],
         "width": W, "height": H, "length": length, "batch_size": 1, "start_image": keyframe})
