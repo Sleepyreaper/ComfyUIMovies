@@ -1,0 +1,10 @@
+{
+  "_comment": "GI Joe-style knock-off, OPEN/BRIGHT/high-motion recipe (open scenes render ~2x the motion of dark/cluttered ones). Render: python -m comfymovies --scene-file prompts/gijoe_serpent.json --duration 60 --res 480p --quality --seed 1980",
+  "title": "GI JOE vs THE SERPENT EMPIRE",
+  "scenes": [
+    { "prompt": "1980s cartoon cel animation, bold outlines, saturated colors: American soldiers sprint across an open sunny battlefield toward the enemy, running fast, rifles blazing with muzzle flashes, explosions bursting, bright blue sky, wide dynamic tracking shot", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: a towering Serpent Empire war mech strides into the open field and opens fire, soldiers scatter and dive across the ground, dust and debris flying, bright daylight, fast sweeping camera", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: full-speed battle in the open, soldiers charging and firing while dodging laser blasts, explosions erupting all around, jeeps racing past, high-energy dynamic action, clear bright sky", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: triumphant victory on an open hilltop at golden sunrise, soldiers cheering and raising the flag high as the defeated mech topples in flames behind them, bright warm light, sweeping heroic camera", "weight": 1.0 }
+  ]
+}

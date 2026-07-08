@@ -1,10 +1,10 @@
 {
-  "_comment": "Original ThunderCats-style knock-off (no trademarked names/characters), reimagined with warrior dogs per user request. The heroic 'Rumble Dogs' pack vs the evil sorcerer 'Grimjaw' on an alien world. Render: python -m comfymovies --scene-file prompts/rumble_dogs.json --duration 60 --res 480p --quality --seed 7777",
+  "_comment": "ThunderCats-style knock-off reimagined with warrior dogs, OPEN/BRIGHT/high-motion recipe. Heroic RUMBLE DOGS vs sorcerer GRIMJAW, no trademarked names. Render: python -m comfymovies --scene-file prompts/rumble_dogs.json --duration 60 --res 480p --quality --seed 7777",
   "title": "RUMBLE DOGS",
   "scenes": [
-    { "prompt": "1980s cartoon, cel animation, bold outlines, vivid fantasy colors: on an alien world with twin moons, a pack of muscular anthropomorphic warrior dogs — the heroic RUMBLE DOGS in gleaming armor and capes — stand guard atop their canyon fortress, their leader a noble golden-furred hound raising a glowing crystal sword, epic wide shot", "weight": 1.0 },
-    { "prompt": "1980s cartoon, cel animation, bold outlines: the evil sorcerer GRIMJAW, a hulking shadowy jackal-demon with green flaming eyes, unleashes his skeletal minions and bat-winged beasts to storm the fortress gates, purple lightning, ominous glowing runes", "weight": 1.1 },
-    { "prompt": "1980s cartoon, cel animation, dynamic action: the golden RUMBLE DOGS leader leaps into battle, his crystal sword blazing with light, clashing against GRIMJAW's dark staff in a shower of magical sparks, the pack fighting minions around them, explosive energy, heroic low angle", "weight": 1.2 },
-    { "prompt": "1980s cartoon, cel animation, triumphant: dawn breaks with golden light as GRIMJAW dissolves into shadow, defeated, and the victorious RUMBLE DOGS pack howls in triumph atop the fortress, the leader thrusting his glowing crystal sword to the sky, proud freeze-frame", "weight": 1.0 }
+    { "prompt": "1980s cartoon cel animation, bold outlines, vivid fantasy colors: on a bright open alien plain under twin moons, a pack of armored warrior dogs in red capes gallops forward at full speed, their golden-furred leader raising a glowing crystal sword, dynamic sweeping camera, clear colorful sky", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: the shadowy jackal sorcerer GRIMJAW charges across the open plain with his skeletal minions and bat-winged beasts, green fire blazing, fast dynamic motion, bright dramatic light", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: an epic open-field clash, the golden RUMBLE DOGS leader leaps and swings his blazing crystal sword against GRIMJAW's dark staff, magical sparks exploding, the pack battling minions all around, high-energy dynamic action", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: triumphant golden sunrise on an open ridge, GRIMJAW dissolving into shadow as the victorious RUMBLE DOGS pack howls and charges forward, the leader thrusting his glowing crystal sword to the bright sky, sweeping heroic camera", "weight": 1.0 }
   ]
 }

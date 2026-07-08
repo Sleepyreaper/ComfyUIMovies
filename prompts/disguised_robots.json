@@ -1,10 +1,10 @@
 {
-  "_comment": "Original Transformers-style knock-off (no trademarked names/characters). Heroic 'Vanguard' robots that disguise as vehicles vs the evil 'Vypex' legion. 4-beat arc; render with: python -m comfymovies --scene-file prompts/disguised_robots.json --duration 60 --res 480p --quality --seed 4242",
+  "_comment": "Transformers-style knock-off, OPEN/BRIGHT/high-motion recipe. Original VANGUARD robots vs VYPEX legion, no trademarked names. Render: python -m comfymovies --scene-file prompts/disguised_robots.json --duration 60 --res 480p --quality --seed 4242",
   "title": "DISGUISED ROBOTS",
   "scenes": [
-    { "prompt": "1980s cartoon, cel animation, bold outlines, saturated colors: on a neon city street at dusk, three ordinary-looking trucks and a sports car suddenly unfold and transform into towering heroic VANGUARD robots with glowing blue visors and chrome armor, gears and panels rotating, dramatic hero pose, lens flares", "weight": 1.0 },
-    { "prompt": "1980s cartoon, cel animation, bold outlines: the evil VYPEX legion arrives — menacing purple-and-black robots that were disguised as fighter jets and tanks transform mid-air, red eyes glowing, energy weapons charging, storm clouds gathering over the city skyline", "weight": 1.1 },
-    { "prompt": "1980s cartoon, cel animation, dynamic action: an epic downtown robot battle, the blue VANGUARD leader and the red-eyed VYPEX warlord clash with energy swords and laser blasts, sparks and explosions, debris flying, low heroic camera angle, motion lines", "weight": 1.2 },
-    { "prompt": "1980s cartoon, cel animation, triumphant: sunrise over the saved city, the heroic VANGUARD robots stand tall and victorious on the rubble as citizens cheer, the defeated VYPEX retreat into the sky, proud freeze-frame with a lens glint", "weight": 1.0 }
+    { "prompt": "1980s cartoon cel animation, bold outlines, saturated colors: on a wide open sunlit highway, trucks and a sports car race forward then transform mid-drive into towering heroic VANGUARD robots with glowing blue visors and chrome armor, panels and gears spinning, dynamic fast camera, bright sky", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: the evil VYPEX robots swoop down from a clear sky, transforming from jets in mid-air, red eyes glowing, blasting energy weapons as they land in an open plaza, fast dynamic motion, bright daylight", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: an epic open-arena robot battle, the blue VANGUARD leader and the red-eyed VYPEX warlord charge and clash with energy swords and laser blasts, sparks flying, robots dodging and striking fast, wide dynamic camera", "weight": 1.0 },
+    { "prompt": "1980s cartoon cel animation, bold outlines: triumphant sunrise over an open city square, the heroic VANGUARD robots stride forward victorious as cheering citizens wave, the defeated VYPEX blasting off into the bright sky, sweeping heroic camera", "weight": 1.0 }
   ]
 }
