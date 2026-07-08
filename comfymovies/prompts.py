@@ -26,12 +26,26 @@ _STYLE_HINTS = [
 ]
 
 _ARC = [
-    "Establishing shot: {subject}. Wide cinematic view that sets the scene.",
-    "Rising action: {subject}. The conflict builds, energy rising.",
-    "Confrontation: {subject}. The forces clash head-on, dramatic and intense.",
-    "Climax: {subject}. The decisive moment, maximum spectacle and motion.",
-    "Resolution: {subject}. The aftermath settles, a final memorable image.",
+    "{subject}. The camera sweeps in fast as the action erupts — everything in "
+    "motion, characters charging forward, dust and debris flying past the lens.",
+    "{subject}. Fast tracking shot following the fast-moving action, characters "
+    "running and fighting, rapid energetic movement, dynamic camera push-in.",
+    "{subject}. Explosive confrontation, bodies and vehicles hurtling across "
+    "frame, the camera whip-pans to follow the chaos, continuous violent motion.",
+    "{subject}. The climactic clash at full speed — leaping, blasting, colliding, "
+    "the camera arcs dramatically around the action, relentless motion and impact.",
+    "{subject}. The action drives to its finish, characters surging forward, "
+    "camera pulling back through flying debris to reveal the dramatic aftermath.",
 ]
+
+# Appended to every scene before on-box enhancement to fight LTX-2's tendency to
+# front-load motion then drift. Pushes sustained subject + camera movement.
+MOTION_DIRECTIVE = (
+    "Continuous energetic motion throughout the entire shot: the subjects move, "
+    "run, fight, and gesture the whole time, and the camera keeps moving "
+    "(tracking, panning, pushing in). No still or frozen moments, no slow static "
+    "pans — full fluid animation from first frame to last."
+)
 
 
 def _extract_style(concept: str) -> str:
