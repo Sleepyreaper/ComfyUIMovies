@@ -79,6 +79,53 @@ def polish(src: str, dst: str, spec: PolishSpec | None = None,
     return dst
 
 
+def concat_films(shot_paths: list[str], dst: str, *, audio: str | None = None,
+                 fps: int = 24, height: int = 1080, sharpen: float = 0.5,
+                 crossfade: float = 0.0, crf: int = 16) -> str:
+    """Concatenate shot clips in order into one film, optionally scored.
+
+    Each shot is first polished (motion-interpolated to ``fps`` and scaled to
+    ``height``) for a consistent look, then concatenated. If ``audio`` is given
+    it's laid under the whole film and trimmed to the video length.
+    """
+    exe = _ffmpeg()
+    import os
+    import tempfile
+
+    tmpdir = tempfile.mkdtemp(prefix="film_")
+    polished: list[str] = []
+    spec = PolishSpec(fps=fps, height=height, sharpen=sharpen, crf=crf)
+    for i, src in enumerate(shot_paths):
+        out = os.path.join(tmpdir, f"p{i:02d}.mp4")
+        polish(src, out, spec)
+        polished.append(out)
+
+    # concat via demuxer (all same codec/params after polishing)
+    listfile = os.path.join(tmpdir, "list.txt")
+    with open(listfile, "w") as f:
+        for p in polished:
+            f.write(f"file '{p}'\n")
+
+    silent = os.path.join(tmpdir, "silent.mp4")
+    cmd = [exe, "-y", "-v", "error", "-f", "concat", "-safe", "0",
+           "-i", listfile, "-c", "copy", silent]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise PostError(f"concat failed: {proc.stderr[-800:]}")
+
+    if not audio:
+        os.replace(silent, dst)
+        return dst
+
+    cmd = [exe, "-y", "-v", "error", "-i", silent, "-i", audio,
+           "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+           "-c:a", "aac", "-b:a", "192k", "-shortest", dst]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise PostError(f"scoring failed: {proc.stderr[-800:]}")
+    return dst
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
