@@ -5,30 +5,31 @@ star; see the voice section for the dub decision.
 
 ---
 
-## ElevenLabs Music prompt (Joe Hisaishi / Ghibli style)
+## ElevenLabs Music prompt (cinematic-anime orchestral)
 
-Paste into ElevenLabs Music, length **50000 ms**, instrumental:
+Paste into ElevenLabs Music, length **50000 ms**, instrumental. (Note: ElevenLabs
+blocks named artists, so this describes the *style* rather than naming a composer.)
 
-> Epic, tender orchestral film score in the style of Joe Hisaishi and Studio
-> Ghibli, fully instrumental, about 50 seconds, in a gentle 3/4 waltz feel, key
-> of D major. A simple, memorable piano melody leads, joined by lush warm
-> strings, soaring French horns, and delicate woodwinds (oboe and flute).
-> Structure it as a mini score that follows a story of wonder and friendship:
-> (0-12s) intimate solo piano, soft and curious, a sense of quiet magic
-> awakening as a child enters an enchanted forest; (12-30s) warm strings and a
-> lyrical oboe enter and the theme blooms, tender and hopeful as an unlikely
-> friendship forms; (30-42s) the full orchestra swells into a soaring, magical
-> crescendo, sweeping strings and bright horns, breathtaking awe and joy;
-> (42-50s) it resolves back to a warm, gentle piano and strings, nostalgic and
-> peaceful, fading softly like a sunset. Rich, cinematic, heartfelt, nostalgic,
-> emotional. No drums, no percussion, no vocals, no electronic sounds.
+> An epic, tender orchestral film score inspired by classic cinematic anime
+> music, fully instrumental, about 50 seconds, in a gentle 3/4 waltz feel, key of
+> D major. A simple, memorable piano melody leads, joined by lush warm strings,
+> soaring French horns, and delicate woodwinds (oboe and flute). Structure it as
+> a mini score that follows a story of wonder and friendship: (0-12s) intimate
+> solo piano, soft and curious, a sense of quiet magic awakening as a child
+> enters an enchanted forest; (12-30s) warm strings and a lyrical oboe enter and
+> the theme blooms, tender and hopeful as an unlikely friendship forms; (30-42s)
+> the full orchestra swells into a soaring, magical crescendo, sweeping strings
+> and bright horns, breathtaking awe and joy; (42-50s) it resolves back to a
+> warm, gentle piano and strings, nostalgic and peaceful, fading softly like a
+> sunset. Rich, cinematic, heartfelt, nostalgic, emotional. No drums, no
+> percussion, no vocals, no electronic sounds.
 
 **Shorter tagline (if the UI wants terse):**
-> Joe Hisaishi / Ghibli-style orchestral waltz, solo piano to soaring strings
-> and horns, wonder and friendship, ~50s, D major, instrumental, no vocals.
+> Cinematic-anime orchestral waltz, solo piano building to soaring strings and
+> horns, wonder and friendship, ~50s, D major, instrumental, no vocals.
 
 **Darker/awe alt (for the magic swell, shot 7):**
-> Hisaishi-style orchestral crescendo, shimmering strings, glockenspiel and
+> Cinematic-anime orchestral crescendo, shimmering strings, glockenspiel and
 > harp, choir-like "aahs" swelling with wonder, magical and vast, ~15s.
 
 ---
