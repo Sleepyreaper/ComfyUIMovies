@@ -119,6 +119,33 @@ class ComfyClient:
         except Exception:
             pass
 
+    def free(self, unload_models: bool = True, free_memory: bool = True) -> None:
+        """Ask ComfyUI to unload models / free VRAM (only acts when idle).
+
+        Useful before a heavy (e.g. high-res) render so the job starts with a
+        clean VRAM slate instead of competing with cached models from a prior
+        run — important for fitting WAN's two 14B experts on a 32GB card.
+        """
+        payload = json.dumps({
+            "unload_models": unload_models, "free_memory": free_memory,
+        }).encode()
+        req = urllib.request.Request(
+            self.base + "/free", data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            urllib.request.urlopen(req, timeout=15)
+        except Exception:
+            pass
+
+    def vram_free_gb(self) -> float:
+        """Current free VRAM in GB on the first CUDA device (0 on failure)."""
+        try:
+            d = self.system_stats()
+            return d["devices"][0]["vram_free"] / 1e9
+        except Exception:
+            return 0.0
+
     def cancel(self, prompt_id: str) -> None:
         """Cancel a specific queued/running prompt without touching others.
 
