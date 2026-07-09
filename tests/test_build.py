@@ -144,3 +144,27 @@ def test_post_filter_string():
     # Non-interpolated path uses a plain fps filter.
     f2 = build_filter(PolishSpec(fps=30, interpolate=False, sharpen=0))
     assert "fps=30" in f2 and "minterpolate" not in f2 and "unsharp" not in f2
+
+
+def test_film_reference_conditioning_wiring():
+    """reference_image must inject LoadImage -> VAEEncode -> ReferenceLatent
+    into the keyframe conditioning, and be absent when unset."""
+    from comfymovies.film import FilmSpec, Shot, build_keyframe_workflow
+
+    shot = Shot(keyframe="a girl in a forest", motion="slow pan", seed=7)
+    base = dict(shots=[shot], character="a girl", style="ghibli")
+
+    with_ref = build_keyframe_workflow(FilmSpec(reference_image="ff_ref.png", **base), 0)
+    types = {n["class_type"] for n in with_ref.values()}
+    assert {"LoadImage", "VAEEncode", "ReferenceLatent"} <= types
+    # ReferenceLatent must feed FluxGuidance (the conditioning chain is intact).
+    rl = next(k for k, n in with_ref.items() if n["class_type"] == "ReferenceLatent")
+    fg = next(n for n in with_ref.values() if n["class_type"] == "FluxGuidance")
+    assert fg["inputs"]["conditioning"][0] == rl
+    # No dangling references.
+    ids = set(with_ref)
+    for ref in _refs(with_ref):
+        assert ref[0] in ids
+
+    without = build_keyframe_workflow(FilmSpec(**base), 0)
+    assert not any(n["class_type"] == "ReferenceLatent" for n in without.values())

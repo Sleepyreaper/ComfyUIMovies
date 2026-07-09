@@ -112,6 +112,40 @@ class ComfyClient:
             f.write(data)
         return dest_path
 
+    def upload_image(self, src_path: str, name: str = "", overwrite: bool = True) -> str:
+        """Upload a local image into ComfyUI's /input; return its server filename.
+
+        Needed to feed a downloaded FLUX keyframe back in as the start image for
+        an LTXVImgToVideo (LoadImage) node.
+        """
+        import os
+        name = name or os.path.basename(src_path)
+        with open(src_path, "rb") as f:
+            data = f.read()
+        boundary = "----comfymovies" + uuid.uuid4().hex
+        parts = []
+        def field(key, val):
+            parts.append(f"--{boundary}\r\nContent-Disposition: form-data; "
+                         f'name="{key}"\r\n\r\n{val}\r\n'.encode())
+        parts.append(
+            f"--{boundary}\r\nContent-Disposition: form-data; "
+            f'name="image"; filename="{name}"\r\n'
+            f"Content-Type: application/octet-stream\r\n\r\n".encode()
+        )
+        parts.append(data)
+        parts.append(b"\r\n")
+        field("overwrite", "true" if overwrite else "false")
+        parts.append(f"--{boundary}--\r\n".encode())
+        body = b"".join(parts)
+        req = urllib.request.Request(
+            self.base + "/upload/image", data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as r:
+            j = json.loads(r.read())
+        sub = j.get("subfolder", "")
+        return f"{sub}/{j['name']}" if sub else j["name"]
+
     def interrupt(self) -> None:
         req = urllib.request.Request(self.base + "/interrupt", data=b"")
         try:

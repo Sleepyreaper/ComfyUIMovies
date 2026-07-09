@@ -16,6 +16,10 @@ CLIP = "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
 VAE = "wan_2.1_vae.safetensors"
 UNET_HIGH = "wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors"
 UNET_LOW = "wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors"
+# Proper image-to-video UNETs: unlike the t2v models above, these actually
+# honor the start_image, so a locked keyframe design survives the animation.
+UNET_I2V_HIGH = "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"
+UNET_I2V_LOW = "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"
 LORA_HIGH = "wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors"
 LORA_LOW = "wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors"
 

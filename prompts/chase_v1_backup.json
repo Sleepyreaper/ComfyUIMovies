@@ -1,0 +1,21 @@
+{
+  "title": "NEON RUN",
+  "hero": "a sleek wild red fox with a bright white-tipped tail, amber eyes, and a small notch in its left ear",
+  "world": "rain-soaked neon Tokyo back-streets at night, glowing pink and blue signage, wet reflective pavement, drifting steam, cinematic anamorphic widescreen, moody volumetric neon lighting, film grain, sharp focus on the fox, crisp subject, no motion blur on the subject",
+  "cuts": [
+    {"id": 0,  "seconds": 3.0, "prompt": "the fox skids to a stop in a narrow neon alley, paws splashing a glowing puddle, ears snapping up alert, head turning sharply, low ground-level camera, rain falling", "seed": 42},
+    {"id": 1,  "seconds": 3.0, "prompt": "a cold white searchlight beam sweeps across the wet alley walls and finds the fox, the fox's amber eyes go wide, reflections shimmering, slow push-in on its face", "seed": 43},
+    {"id": 2,  "seconds": 3.0, "prompt": "the fox explodes into a sprint, launching off its back legs, a big splash of puddle water bursting behind it, dynamic low tracking camera, neon streaking", "seed": 44},
+    {"id": 3,  "seconds": 4.0, "prompt": "the fox sprinting at full speed down the long alley, camera tracking fast alongside in a smooth dolly, pink and blue neon signs streaking past, wet reflections flying", "seed": 45},
+    {"id": 4,  "seconds": 3.0, "prompt": "the fox leaps over a row of stacked crates and trash cans, suspended mid-air in a dynamic arc, low upward camera angle, neon behind it", "seed": 46},
+    {"id": 5,  "seconds": 3.0, "prompt": "a sleek black quadruped security robot with a glowing red scanner eye rounds the corner into the alley in pursuit, sparks under its metal feet, menacing, hard tracking shot", "seed": 47},
+    {"id": 6,  "seconds": 3.0, "prompt": "the fox darts hard around a tight corner, the camera whip-pans to follow, neon smearing across the frame, water spraying", "seed": 48},
+    {"id": 7,  "seconds": 4.0, "prompt": "high wide angle looking down as the fox weaves at speed through a crowded narrow neon market street, dodging legs and stalls, lanterns swinging, steam rising", "seed": 49},
+    {"id": 8,  "seconds": 3.0, "prompt": "the robot dog lunges and swipes, the fox ducks low and slides under a parked neon-lit scooter, sparks flying overhead, tense near-miss, dynamic low camera", "seed": 50},
+    {"id": 9,  "seconds": 4.0, "prompt": "the fox bounds up a steep metal staircase and ramp onto the rooftops, the glittering neon city sprawling below, camera rising with it", "seed": 51},
+    {"id": 10, "seconds": 4.0, "prompt": "the fox makes a huge leap across a rooftop gap over a glowing neon street canyon far below, slow-motion at the apex, tail streaming, dramatic wide shot", "seed": 52},
+    {"id": 11, "seconds": 3.5, "prompt": "the fox lands hard on the far rooftop, rolls once, and keeps running toward a giant glowing red neon torii sign, water and gravel scattering", "seed": 53},
+    {"id": 12, "seconds": 3.0, "prompt": "the robot dog skids to a halt at the rooftop edge, its red scanner sweeping uselessly as thick neon-lit steam and fog swallow the scene, losing the fox", "seed": 54},
+    {"id": 13, "seconds": 4.5, "prompt": "the fox slows to a stop at the rooftop edge, silhouette against the vast glowing neon skyline, sides heaving as it catches its breath, safe, slow cinematic camera pull-back", "seed": 55}
+  ]
+}

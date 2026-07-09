@@ -15,8 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .wan import (
-    CLIP as WAN_CLIP, UNET_HIGH, UNET_LOW, VAE as WAN_VAE, WAN_NEGATIVE,
-    WAN_SHIFT, snap, wan_frames,
+    CLIP as WAN_CLIP, UNET_I2V_HIGH as UNET_HIGH, UNET_I2V_LOW as UNET_LOW,
+    VAE as WAN_VAE, WAN_NEGATIVE, WAN_SHIFT, snap, wan_frames,
 )
 
 # FLUX 2 keyframe assets (confirmed installed).
@@ -66,6 +66,7 @@ class FilmSpec:
     wan_cfg: float = 3.5
     boundary_fraction: float = 0.5
     prefix: str = "ComfyUIMovies/film"
+    reference_image: str = ""   # filename in ComfyUI /input; locks character+creature
 
     def normalized(self) -> "FilmSpec":
         self.width = snap(self.width, 16)
@@ -78,19 +79,34 @@ class FilmSpec:
 
     def motion_prompt(self, shot: Shot) -> str:
         # Keep the anime style anchored during animation so WAN doesn't drift to
-        # photorealism; the style line follows the motion description.
-        return f"{shot.motion}. {ANIME_MOTION_ANCHOR}"
+        # photorealism; also restate the locked character so WAN's text guidance
+        # reinforces (rather than fights) the reference-locked keyframe.
+        parts = [p for p in (self.character, shot.motion) if p]
+        return f"{'. '.join(parts)}. {ANIME_MOTION_ANCHOR}"
 
 
-def _flux_keyframe(node, key: str, prompt: str, seed: int, W: int, H: int) -> list:
-    """FLUX 2 keyframe subgraph; returns an IMAGE ref."""
+def _flux_keyframe(node, key: str, prompt: str, seed: int, W: int, H: int,
+                   ref_image: str = "") -> list:
+    """FLUX 2 keyframe subgraph; returns an IMAGE ref.
+
+    When ``ref_image`` (a filename in ComfyUI's /input) is given, it is
+    VAE-encoded and chained into the conditioning via ``ReferenceLatent`` so the
+    locked character + creature design is reproduced in every shot (FLUX.2's
+    native multi-reference mechanism)."""
     node(f"fu_{key}", "UNETLoader", {"unet_name": FLUX_UNET, "weight_dtype": "default"})
     node(f"fl_{key}", "LoraLoaderModelOnly", {
         "model": [f"fu_{key}", 0], "lora_name": FLUX_TURBO_LORA, "strength_model": 1.0})
     node(f"fc_{key}", "CLIPLoader", {"clip_name": FLUX_CLIP, "type": "flux2", "device": "default"})
     node(f"fv_{key}", "VAELoader", {"vae_name": FLUX_VAE})
     node(f"fp_{key}", "CLIPTextEncode", {"text": prompt, "clip": [f"fc_{key}", 0]})
-    node(f"fg_{key}", "FluxGuidance", {"conditioning": [f"fp_{key}", 0], "guidance": FLUX_GUIDANCE})
+    cond = [f"fp_{key}", 0]
+    if ref_image:
+        node(f"fli_{key}", "LoadImage", {"image": ref_image})
+        node(f"fis_{key}", "FluxKontextImageScale", {"image": [f"fli_{key}", 0]})
+        node(f"fre_{key}", "VAEEncode", {"pixels": [f"fis_{key}", 0], "vae": [f"fv_{key}", 0]})
+        node(f"frl_{key}", "ReferenceLatent", {"conditioning": cond, "latent": [f"fre_{key}", 0]})
+        cond = [f"frl_{key}", 0]
+    node(f"fg_{key}", "FluxGuidance", {"conditioning": cond, "guidance": FLUX_GUIDANCE})
     node(f"fgd_{key}", "BasicGuider", {"model": [f"fl_{key}", 0], "conditioning": [f"fg_{key}", 0]})
     node(f"fn_{key}", "RandomNoise", {"noise_seed": seed})
     node(f"fs_{key}", "Flux2Scheduler", {"steps": FLUX_STEPS, "width": W, "height": H})
@@ -114,7 +130,7 @@ def build_keyframe_workflow(spec: FilmSpec, index: int) -> dict:
         return nid
 
     img = _flux_keyframe(node, str(index), spec.keyframe_prompt(shot), shot.seed,
-                         spec.width, spec.height)
+                         spec.width, spec.height, spec.reference_image)
     node("save", "SaveImage", {"images": img, "filename_prefix": f"{spec.prefix}_kf{index:02d}"})
     return g
 
@@ -135,7 +151,8 @@ def build_shot_workflow(spec: FilmSpec, index: int) -> dict:
         g[nid] = {"class_type": ct, "inputs": inp}
         return nid
 
-    keyframe = _flux_keyframe(node, str(index), spec.keyframe_prompt(shot), shot.seed, W, H)
+    keyframe = _flux_keyframe(node, str(index), spec.keyframe_prompt(shot), shot.seed, W, H,
+                              spec.reference_image)
 
     node("wclip", "CLIPLoader", {"clip_name": WAN_CLIP, "type": "wan", "device": "default"})
     node("wvae", "VAELoader", {"vae_name": WAN_VAE})

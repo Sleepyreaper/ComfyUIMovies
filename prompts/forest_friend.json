@@ -53,5 +53,7 @@
       "motion": "the girl and the little spirit sit together breathing softly, grass and hair sway in a gentle breeze, warm light shifts, distant lights twinkle, calm resolving motion, slow push-in"
     }
   ],
-  "creature": "a small round fluffy white forest spirit the size of a melon, perfectly round and soft like a puffball, with two big gentle black eyes and two tiny green leaf-shaped ears on top, no wings and no arms, softly glowing"
+  "creature": "a small round fluffy white forest spirit the size of a melon, perfectly round and soft like a puffball, with two big gentle black eyes and two tiny green leaf-shaped ears on top, no wings and no arms, softly glowing",
+  "reference_image": "ff_ref.png",
+  "reference_note": "Character+creature locked via FLUX.2 ReferenceLatent. Sheet: output/ff_keyframes_v2/character_sheet.png (seed 1111). Upload to ComfyUI /input as ff_ref.png before rendering."
 }
