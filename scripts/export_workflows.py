@@ -3,6 +3,7 @@
 Writes into ``workflows/``:
   flux2_image_edit.ui.json / .api.json
   qwen_image_edit_2511.api.json   (UI version is the official downloaded template)
+  qwen_compose_3ref.ui.json / .api.json   (3-reference -> 1 image compositor)
 
 Drag a ``.ui.json`` onto the ComfyUI canvas to load an editable node graph;
 ``.api.json`` is the /prompt payload (also loadable, auto-arranged). Then set the
@@ -35,21 +36,32 @@ def main():
                                1024, 1024, quality="fast")
     qwen = build_qwen_edit_workflow(["your_input.png"], "describe your edit here",
                                     quality="fast")
+    # 3-reference compositor (image1 = canvas/base, image2 + image3 = refs).
+    compose = build_qwen_edit_workflow(
+        ["image1_base.png", "image2_ref.png", "image3_ref.png"],
+        "the subject from image 2 and the subject from image 3 together in the "
+        "scene/location of image 1", quality="fast")
 
     json.dump(flux, open(f"{OUT}/flux2_image_edit.api.json", "w"), indent=2)
     json.dump(qwen, open(f"{OUT}/qwen_image_edit_2511.api.json", "w"), indent=2)
+    json.dump(compose, open(f"{OUT}/qwen_compose_3ref.api.json", "w"), indent=2)
 
     classes = {n["class_type"] for n in flux.values()}
+    classes |= {n["class_type"] for n in compose.values()}
     oi = object_info(classes)
     ui = to_ui({str(k): v for k, v in flux.items()}, oi,
                title="FLUX.2 image edit (ComfyUIMovies)")
     json.dump(ui, open(f"{OUT}/flux2_image_edit.ui.json", "w"), indent=2)
+    ui3 = to_ui({str(k): v for k, v in compose.items()}, oi,
+                title="Qwen 3-image compositor (ComfyUIMovies)")
+    json.dump(ui3, open(f"{OUT}/qwen_compose_3ref.ui.json", "w"), indent=2)
 
     print("wrote:")
     for f in ("flux2_image_edit.ui.json", "flux2_image_edit.api.json",
-              "qwen_image_edit_2511.api.json"):
+              "qwen_image_edit_2511.api.json", "qwen_compose_3ref.ui.json",
+              "qwen_compose_3ref.api.json"):
         print("  ", os.path.join(OUT, f))
-    print("(qwen UI = workflows/qwen_image_edit_2511.ui.json, the official template)")
+    print("(qwen edit UI = workflows/qwen_image_edit_2511.ui.json, the official template)")
 
 
 if __name__ == "__main__":

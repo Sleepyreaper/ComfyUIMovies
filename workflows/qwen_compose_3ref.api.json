@@ -1,0 +1,227 @@
+{
+  "unet": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_edit_2511_bf16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "action": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "unet",
+        0
+      ],
+      "lora_name": "QWEN_EDIT_ACTION_V1.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "ms": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "action",
+        0
+      ],
+      "shift": 3.1
+    }
+  },
+  "cfgn": {
+    "class_type": "CFGNorm",
+    "inputs": {
+      "model": [
+        "ms",
+        0
+      ],
+      "strength": 1.0
+    }
+  },
+  "light": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "cfgn",
+        0
+      ],
+      "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "clip": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "vae": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+  "img0": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "image1_base.png"
+    }
+  },
+  "scale": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "img0",
+        0
+      ]
+    }
+  },
+  "img2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "image2_ref.png"
+    }
+  },
+  "img3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "image3_ref.png"
+    }
+  },
+  "pos": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "clip",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ],
+      "prompt": "the subject from image 2 and the subject from image 3 together in the scene/location of image 1",
+      "image1": [
+        "scale",
+        0
+      ],
+      "image2": [
+        "img2",
+        0
+      ],
+      "image3": [
+        "img3",
+        0
+      ]
+    }
+  },
+  "posr": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "pos",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "neg": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "clip",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ],
+      "prompt": "",
+      "image1": [
+        "scale",
+        0
+      ],
+      "image2": [
+        "img2",
+        0
+      ],
+      "image3": [
+        "img3",
+        0
+      ]
+    }
+  },
+  "negr": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "neg",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "lat": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "scale",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "ks": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "light",
+        0
+      ],
+      "positive": [
+        "posr",
+        0
+      ],
+      "negative": [
+        "negr",
+        0
+      ],
+      "latent_image": [
+        "lat",
+        0
+      ],
+      "seed": 0,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    }
+  },
+  "dec": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "ks",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "save": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "dec",
+        0
+      ],
+      "filename_prefix": "ComfyUIMovies/qwenedit"
+    }
+  }
+}
