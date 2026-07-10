@@ -198,7 +198,7 @@ def build_qwen_edit_workflow(
               "strength_model": action_strength})
         model = ["action", 0]
     node("ms", "ModelSamplingAuraFlow", {"model": model, "shift": QWEN_SHIFT})
-    node("cfgn", "CFGNorm", {"model": ["ms", 0]})
+    node("cfgn", "CFGNorm", {"model": ["ms", 0], "strength": 1.0})
     model = ["cfgn", 0]
     if p["lightning"]:
         node("light", "LoraLoaderModelOnly",
