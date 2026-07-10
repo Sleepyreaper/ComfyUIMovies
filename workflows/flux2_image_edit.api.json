@@ -1,0 +1,176 @@
+{
+  "unet": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux2_dev_fp8mixed.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "lora": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "unet",
+        0
+      ],
+      "lora_name": "Flux_2-Turbo-LoRA_comfyui.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "clip": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_bf16.safetensors",
+      "type": "flux2",
+      "device": "default"
+    }
+  },
+  "vae": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "img0": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "your_input.png"
+    }
+  },
+  "scale0": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "img0",
+        0
+      ]
+    }
+  },
+  "enc0": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "scale0",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "pos": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "describe your edit here",
+      "clip": [
+        "clip",
+        0
+      ]
+    }
+  },
+  "ref0": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "pos",
+        0
+      ],
+      "latent": [
+        "enc0",
+        0
+      ]
+    }
+  },
+  "guid": {
+    "class_type": "FluxGuidance",
+    "inputs": {
+      "conditioning": [
+        "ref0",
+        0
+      ],
+      "guidance": 3.0
+    }
+  },
+  "guider": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "lora",
+        0
+      ],
+      "conditioning": [
+        "guid",
+        0
+      ]
+    }
+  },
+  "noise": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 0
+    }
+  },
+  "sched": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+      "steps": 8,
+      "width": 1024,
+      "height": 1024
+    }
+  },
+  "sampler": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "sample": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "noise",
+        0
+      ],
+      "guider": [
+        "guider",
+        0
+      ],
+      "sampler": [
+        "sampler",
+        0
+      ],
+      "sigmas": [
+        "sched",
+        0
+      ],
+      "latent_image": [
+        "enc0",
+        0
+      ]
+    }
+  },
+  "dec": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "sample",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "save": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "dec",
+        0
+      ],
+      "filename_prefix": "ComfyUIMovies/edit"
+    }
+  }
+}
