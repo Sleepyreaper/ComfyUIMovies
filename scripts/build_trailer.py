@@ -135,11 +135,22 @@ def _card_clip(png, dst, dur, flash=True):
          "-pix_fmt", "yuv420p", dst])
 
 
-def _process_shot(src, dst, fx, scan):
-    """Apply 80s look + flash + laser overlays to one shot clip."""
+def _process_shot(src, dst, fx, scan, rescue=False):
+    """Apply 80s look + flash + laser overlays to one shot clip.
+
+    ``rescue`` adds a slow camera drift over a slightly enlarged frame so a
+    STATIC/low-motion take never sits dead on screen (camera-on-cel feel).
+    """
     blue, red = f"{ASSETDIR}/bolt_blue.png", f"{ASSETDIR}/bolt_red.png"
     inputs = ["-i", src, "-i", scan]
-    fg = [f"[0:v]{LOOK}[base]", "[1:v]format=rgba,colorchannelmixer=aa=0.5[sl]",
+    pre = ""
+    if rescue:
+        zw, zh = (int(W * 1.14) // 2 * 2), (int(H * 1.14) // 2 * 2)
+        drift = (f"scale={zw}:{zh},"
+                 "crop=%d:%d:x='(in_w-out_w)/2+(in_w-out_w)/2*sin(t*0.55)':"
+                 "y='(in_h-out_h)/2+(in_h-out_h)/2*sin(t*0.42)'," % (W, H))
+        pre = drift
+    fg = [f"[0:v]{pre}{LOOK}[base]", "[1:v]format=rgba,colorchannelmixer=aa=0.5[sl]",
           "[base][sl]overlay=0:0[v0]"]
     last = "v0"
     idx = 2
@@ -204,7 +215,15 @@ def assemble():
                 if not os.path.exists(src):
                     print("MISSING", src); continue
                 out = f"{tmp}/{n:02d}_shot{sid:02d}.mp4"
-                _process_shot(src, out, fx_by_id.get(sid, ""), scan)
+                try:
+                    from comfymovies.takes import score_clip, MOTION_LOW
+                    sc = score_clip(src)
+                    rescue = sc.motion < MOTION_LOW
+                    if rescue:
+                        print(f"  rescue shot{sid:02d} (motion {sc.motion} -> camera drift)")
+                except Exception:
+                    rescue = False
+                _process_shot(src, out, fx_by_id.get(sid, ""), scan, rescue=rescue)
                 clips.append(out); n += 1
     listf = f"{tmp}/list.txt"
     with open(listf, "w") as f:

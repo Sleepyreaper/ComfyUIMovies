@@ -100,7 +100,7 @@ def render_ref(c, sb, name):
     return server
 
 
-def render_shot(c, sb, shot):
+def render_shot(c, sb, shot, takes=1):
     sid = shot["id"]; style = sb["style"]; neg = sb.get("neg", "")
     ref = sb["refs"].get(shot["ref"], "") if shot.get("ref") else ""
     kf_prefix = f"ComfyUIMovies/serpent_kf{sid:02d}"
@@ -115,15 +115,43 @@ def render_shot(c, sb, shot):
     server = c.upload_image(kf_local, name=f"serpent_kf{sid:02d}.png")
     print(f"[shot {sid:02d}] keyframe {time.time()-t0:.0f}s", flush=True)
 
-    t1 = time.time()
-    pid = c.submit(i2v_graph(server, sub_style(shot["motion"], style), neg,
-                             shot["seconds"], shot["seed"] + 5000,
-                             f"ComfyUIMovies/serpent_shot{sid:02d}"))
-    entry = c.wait(pid, timeout=1200)
-    vids = [f for f in c.find_outputs(entry)
-            if f["filename"].lower().endswith((".mp4", ".webm", ".mov"))]
-    c.download(vids[0], out_local)
-    print(f"[shot {sid:02d}] i2v {time.time()-t1:.0f}s -> {out_local}", flush=True)
+    # best-of-N: render `takes` i2v variants (different noise seeds), auto-pick
+    # the highest-scoring (healthy motion + sharp, no static/warp).
+    motion = sub_style(shot["motion"], style)
+    take_paths = []
+    for k in range(takes):
+        t1 = time.time()
+        seed = shot["seed"] + 5000 + k * 137
+        pid = c.submit(i2v_graph(server, motion, neg, shot["seconds"], seed,
+                                 f"ComfyUIMovies/serpent_shot{sid:02d}_t{k}"))
+        entry = c.wait(pid, timeout=1200)
+        vids = [f for f in c.find_outputs(entry)
+                if f["filename"].lower().endswith((".mp4", ".webm", ".mov"))]
+        tp = os.path.join(OUTDIR, f"shot{sid:02d}_t{k}.mp4")
+        c.download(vids[0], tp)
+        take_paths.append(tp)
+        print(f"[shot {sid:02d}] take {k} {time.time()-t1:.0f}s", flush=True)
+
+    if takes == 1:
+        os.replace(take_paths[0], out_local)
+        print(f"[shot {sid:02d}] -> {out_local}", flush=True)
+        return out_local
+
+    try:
+        from comfymovies.takes import pick_best
+        best, bscore, allscores = pick_best(take_paths)
+        for i, s in enumerate(allscores):
+            print(f"    take {i}: motion={s.motion} sharp={s.sharpness} "
+                  f"jerk={s.jerk} score={s.score} [{s.verdict}]", flush=True)
+        os.replace(best, out_local)
+        for p in take_paths:
+            if os.path.exists(p) and os.path.abspath(p) != os.path.abspath(out_local):
+                os.remove(p)
+        print(f"[shot {sid:02d}] BEST -> {out_local} (score {bscore.score} {bscore.verdict})",
+              flush=True)
+    except Exception as e:
+        os.replace(take_paths[0], out_local)
+        print(f"[shot {sid:02d}] scoring failed ({e}); kept take 0", flush=True)
     return out_local
 
 
@@ -141,10 +169,12 @@ if __name__ == "__main__":
 
     only = {int(a) for a in sys.argv[1:]} if arg not in ("all", "refs") else None
     shots = [s for s in sb["shots"] if only is None or s["id"] in only]
+    takes = int(os.environ.get("TAKES", "1"))
+    print(f"rendering {len(shots)} shot(s), {takes} take(s) each", flush=True)
     done = []
     for shot in shots:
         try:
-            done.append(render_shot(c, sb, shot))
+            done.append(render_shot(c, sb, shot, takes=takes))
         except Exception as e:
             print(f"[shot {shot['id']:02d}] FAILED: {e}", flush=True)
     print("DONE:", done, flush=True)
